@@ -88,6 +88,13 @@ h2{text-align:center;margin-bottom:5px;}
 
 <script>
 
+let globalLat = null;
+let globalLon = null;
+let countdownInterval = null;
+let currentDay = new Date().getDate();
+let prayers = {};
+let lastTriggered = "";
+
 function pad(n){ return String(n).padStart(2,'0'); }
 
 function updateClock(){
@@ -95,7 +102,6 @@ function updateClock(){
     document.getElementById("clock").innerHTML=
         pad(now.getHours())+":"+pad(now.getMinutes())+":"+pad(now.getSeconds());
 
-    // auto theme
     if(now.getHours()>=18 || now.getHours()<5){
         document.body.className="dark";
     }else{
@@ -110,113 +116,130 @@ function updateDate(){
         now.toLocaleDateString('id-ID',opt);
 }
 
-function startApp(lat,lon){
+function fetchJadwal(){
 
-const today=new Date();
-const day=today.getDate();
-const month=today.getMonth()+1;
-const year=today.getFullYear();
+    const today=new Date();
+    const day=today.getDate();
+    const month=today.getMonth()+1;
+    const year=today.getFullYear();
 
-fetch(`https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=${lat}&longitude=${lon}&method=11`)
-.then(res=>res.json())
-.then(data=>{
+    fetch(`https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=${globalLat}&longitude=${globalLon}&method=11`)
+    .then(res=>res.json())
+    .then(data=>{
 
-    const timings=data.data.timings;
-    const hijri=data.data.date.hijri.date;
-    document.getElementById("hijriyah").innerHTML=hijri+ " " + "H.";
+        const timings=data.data.timings;
+        const hijri=data.data.date.hijri.date;
+        document.getElementById("hijriyah").innerHTML=hijri+" H.";
 
-    const prayers={
-        "Subuh":timings.Fajr,
-        "Dzuhur":timings.Dhuhr,
-        "Ashar":timings.Asr,
-        "Maghrib":timings.Maghrib,
-        "Isya":timings.Isha
-    };
+        prayers = {
+            "Subuh":timings.Fajr,
+            "Dzuhur":timings.Dhuhr,
+            "Ashar":timings.Asr,
+            "Maghrib":timings.Maghrib,
+            "Isya":timings.Isha
+        };
 
-    const jadwal=document.getElementById("jadwal");
-    let html="";
-    for(let name in prayers){
-        html+=`<div class="box" id="prayer-${name}">
-                ${name} : ${timings[name==='Subuh'?'Fajr':
-                                    name==='Dzuhur'?'Dhuhr':
-                                    name==='Ashar'?'Asr':
-                                    name==='Maghrib'?'Maghrib':'Isha'].substring(0,5)}
-              </div>`;
-    }
-    jadwal.innerHTML=html;
-
-    let lastTriggered="";
-
-    function updateCountdown(){
-        const now=new Date();
-        let nextName="";
-        let nextTime=null;
-
+        const jadwal=document.getElementById("jadwal");
+        let html="";
         for(let name in prayers){
-            const t=prayers[name].split(":");
-            const d=new Date();
-            d.setHours(t[0],t[1],0);
-            if(d>now){
-                nextName=name;
-                nextTime=d;
-                break;
-            }
+            html+=`<div class="box" id="prayer-${name}">
+                    ${name} : ${prayers[name].substring(0,5)}
+                  </div>`;
         }
+        jadwal.innerHTML=html;
 
-        if(!nextTime){
-            document.getElementById("countdown").innerHTML="Menunggu Subuh Besok";
-            return;
-        }
+        lastTriggered="";
+        startCountdown();
+    });
+}
 
-        const diff=nextTime-now;
-        let h=Math.floor(diff/1000/3600);
-        let m=Math.floor((diff%(1000*3600))/(1000*60));
-        let s=Math.floor((diff%(1000*60))/1000);
+function startCountdown(){
 
-        h=pad(h); m=pad(m); s=pad(s);
-
-        document.getElementById("countdown").innerHTML=
-            `Menuju ${nextName}<br><strong>${h}:${m}:${s}</strong>`;
-
-        document.querySelectorAll(".box").forEach(b=>b.classList.remove("next"));
-        const active=document.getElementById("prayer-"+nextName);
-        if(active) active.classList.add("next");
-
-        // 🔔 adzan trigger
-        if(h==="00" && m==="00" && s==="00" && lastTriggered!==nextName){
-            lastTriggered=nextName;
-            document.getElementById("adzan").play();
-            alert("Waktu "+nextName+" telah tiba");
-        }
+    if(countdownInterval){
+        clearInterval(countdownInterval);
     }
 
     updateCountdown();
-    setInterval(updateCountdown,1000);
-});
+    countdownInterval=setInterval(updateCountdown,1000);
 }
 
-// ambil lokasi + reverse geocode kota
+function updateCountdown(){
+
+    const now=new Date();
+    let nextName="";
+    let nextTime=null;
+
+    for(let name in prayers){
+        const t=prayers[name].split(":");
+        const d=new Date();
+        d.setHours(t[0],t[1],0);
+        if(d>now){
+            nextName=name;
+            nextTime=d;
+            break;
+        }
+    }
+
+    if(!nextTime){
+        document.getElementById("countdown").innerHTML="Menunggu Subuh Besok";
+        return;
+    }
+
+    const diff=nextTime-now;
+    let h=Math.floor(diff/1000/3600);
+    let m=Math.floor((diff%(1000*3600))/(1000*60));
+    let s=Math.floor((diff%(1000*60))/1000);
+
+    h=pad(h); m=pad(m); s=pad(s);
+
+    document.getElementById("countdown").innerHTML=
+        `Menuju ${nextName}<br><strong>${h}:${m}:${s}</strong>`;
+
+    document.querySelectorAll(".box").forEach(b=>b.classList.remove("next"));
+    const active=document.getElementById("prayer-"+nextName);
+    if(active) active.classList.add("next");
+
+    if(h==="00" && m==="00" && s==="00" && lastTriggered!==nextName){
+        lastTriggered=nextName;
+        document.getElementById("adzan").play();
+        alert("Waktu "+nextName+" telah tiba");
+    }
+}
+
+/* === GEOLOCATION === */
+
 if(navigator.geolocation){
 navigator.geolocation.getCurrentPosition(pos=>{
-    const lat=pos.coords.latitude;
-    const lon=pos.coords.longitude;
+    globalLat=pos.coords.latitude;
+    globalLon=pos.coords.longitude;
 
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${globalLat}&lon=${globalLon}&format=json`)
     .then(res=>res.json())
     .then(loc=>{
         document.getElementById("lokasi").innerHTML=
-            loc.address.city||loc.address.town||loc.address.village;
+            loc.address.city||loc.address.town||loc.address.village||"Lokasi Anda";
     });
 
-    startApp(lat,lon);
+    fetchJadwal();
 
 },()=>alert("Aktifkan GPS"));
 }
+
+/* === AUTO UPDATE TIAP HARI === */
+
+setInterval(()=>{
+    const now=new Date();
+    if(now.getDate()!==currentDay){
+        currentDay=now.getDate();
+        updateDate();
+        fetchJadwal();
+    }
+},60000); // cek tiap 1 menit
 
 updateDate();
 updateClock();
 setInterval(updateClock,1000);
 
-</script>
+        </script>
 </body>
 </html>
