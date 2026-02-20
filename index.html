@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Jadwal Sholat</title>
+<style>
+body{
+    font-family:'Segoe UI',sans-serif;
+    padding:20px;
+    margin:0;
+    transition:0.5s;
+}
+body.dark{
+    background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:white;
+}
+body.light{
+    background:linear-gradient(135deg,#f5f7fa,#c3cfe2);
+    color:#222;
+}
+
+h2{text-align:center;margin-bottom:5px;}
+
+.info{text-align:center;opacity:0.8;margin-bottom:10px;}
+
+.clock{
+    text-align:center;
+    font-size:32px;
+    font-weight:bold;
+    margin-bottom:20px;
+    letter-spacing:2px;
+}
+
+.box{
+    padding:14px;
+    margin:10px 0;
+    border-radius:12px;
+    transition:0.3s;
+    background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(10px);
+}
+.next{
+    background:rgba(0,255,150,0.25);
+    border:1px solid rgba(0,255,150,0.6);
+    transform:scale(1.02);
+    font-weight:bold;
+}
+
+.countdown{
+    text-align:center;
+    margin-top:20px;
+    padding:15px;
+    border-radius:12px;
+    background:rgba(0,0,0,0.3);
+    font-size:20px;
+}
+#lokasi {
+  font-weight: bold;
+  font-size: 35px;
+}
+
+.footer {
+  margin-top: 50px;
+}
+</style>
+</head>
+<body class="dark">
+
+<h2>Jadwal Sholat</h2>
+<div class="info" id="lokasi"></div>
+<div class="info" id="tanggal"></div>
+<div class="info" id="hijriyah"></div>
+<div class="clock" id="clock"></div>
+
+<div id="jadwal"></div>
+<div class="countdown" id="countdown"></div>
+<div class="footer">
+  <footer>
+    <center>
+      Copyright &copy; RizWebs 2016.
+    </center>
+  </footer>
+</div>
+
+<audio id="adzan" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+
+<script>
+
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function updateClock(){
+    const now=new Date();
+    document.getElementById("clock").innerHTML=
+        pad(now.getHours())+":"+pad(now.getMinutes())+":"+pad(now.getSeconds());
+
+    // auto theme
+    if(now.getHours()>=18 || now.getHours()<5){
+        document.body.className="dark";
+    }else{
+        document.body.className="light";
+    }
+}
+
+function updateDate(){
+    const now=new Date();
+    const opt={weekday:'long',day:'2-digit',month:'long',year:'numeric'};
+    document.getElementById("tanggal").innerHTML=
+        now.toLocaleDateString('id-ID',opt);
+}
+
+function startApp(lat,lon){
+
+const today=new Date();
+const day=today.getDate();
+const month=today.getMonth()+1;
+const year=today.getFullYear();
+
+fetch(`https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=${lat}&longitude=${lon}&method=11`)
+.then(res=>res.json())
+.then(data=>{
+
+    const timings=data.data.timings;
+    const hijri=data.data.date.hijri.date;
+    document.getElementById("hijriyah").innerHTML=hijri+ " " + "H.";
+
+    const prayers={
+        "Subuh":timings.Fajr,
+        "Dzuhur":timings.Dhuhr,
+        "Ashar":timings.Asr,
+        "Maghrib":timings.Maghrib,
+        "Isya":timings.Isha
+    };
+
+    const jadwal=document.getElementById("jadwal");
+    let html="";
+    for(let name in prayers){
+        html+=`<div class="box" id="prayer-${name}">
+                ${name} : ${timings[name==='Subuh'?'Fajr':
+                                    name==='Dzuhur'?'Dhuhr':
+                                    name==='Ashar'?'Asr':
+                                    name==='Maghrib'?'Maghrib':'Isha'].substring(0,5)}
+              </div>`;
+    }
+    jadwal.innerHTML=html;
+
+    let lastTriggered="";
+
+    function updateCountdown(){
+        const now=new Date();
+        let nextName="";
+        let nextTime=null;
+
+        for(let name in prayers){
+            const t=prayers[name].split(":");
+            const d=new Date();
+            d.setHours(t[0],t[1],0);
+            if(d>now){
+                nextName=name;
+                nextTime=d;
+                break;
+            }
+        }
+
+        if(!nextTime){
+            document.getElementById("countdown").innerHTML="Menunggu Subuh Besok";
+            return;
+        }
+
+        const diff=nextTime-now;
+        let h=Math.floor(diff/1000/3600);
+        let m=Math.floor((diff%(1000*3600))/(1000*60));
+        let s=Math.floor((diff%(1000*60))/1000);
+
+        h=pad(h); m=pad(m); s=pad(s);
+
+        document.getElementById("countdown").innerHTML=
+            `Menuju ${nextName}<br><strong>${h}:${m}:${s}</strong>`;
+
+        document.querySelectorAll(".box").forEach(b=>b.classList.remove("next"));
+        const active=document.getElementById("prayer-"+nextName);
+        if(active) active.classList.add("next");
+
+        // 🔔 adzan trigger
+        if(h==="00" && m==="00" && s==="00" && lastTriggered!==nextName){
+            lastTriggered=nextName;
+            document.getElementById("adzan").play();
+            alert("Waktu "+nextName+" telah tiba");
+        }
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown,1000);
+});
+}
+
+// ambil lokasi + reverse geocode kota
+if(navigator.geolocation){
+navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude;
+    const lon=pos.coords.longitude;
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+    .then(res=>res.json())
+    .then(loc=>{
+        document.getElementById("lokasi").innerHTML=
+            loc.address.city||loc.address.town||loc.address.village;
+    });
+
+    startApp(lat,lon);
+
+},()=>alert("Aktifkan GPS"));
+}
+
+updateDate();
+updateClock();
+setInterval(updateClock,1000);
+
+</script>
+</body>
+</html>
