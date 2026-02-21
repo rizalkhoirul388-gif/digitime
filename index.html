@@ -239,7 +239,19 @@ setInterval(()=>{
 updateDate();
 updateClock();
 setInterval(updateClock,1000);
+let audioUnlocked = false;
 
+document.addEventListener("click", function(){
+    if(!audioUnlocked){
+        const adzan = document.getElementById("adzan");
+        adzan.play().then(()=>{
+            adzan.pause();
+            adzan.currentTime = 0;
+            audioUnlocked = true;
+        }).catch(()=>{});
+    }
+});
+    
         </script>
 </body>
 </html>
