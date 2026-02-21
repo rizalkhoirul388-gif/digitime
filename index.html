@@ -199,7 +199,7 @@ function updateCountdown(){
     const active=document.getElementById("prayer-"+nextName);
     if(active) active.classList.add("next");
 
-    if(h==="00" && m==="00" && s==="00" && lastTriggered!==nextName){
+    if(diff <= 1000 && lastTriggered !== nextName){
         lastTriggered=nextName;
         document.getElementById("adzan").play();
         alert("Waktu "+nextName+" telah tiba");
