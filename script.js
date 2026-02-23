@@ -33,7 +33,7 @@ function fetchJadwal(){
     const month=today.getMonth()+1;
     const year=today.getFullYear();
 
-    fetch(`https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=${globalLat}&longitude=${globalLon}&method=11`)
+    fetch(`https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=${globalLat}&longitude=${globalLon}&method=11&tune=0,3,0,3,3,3,0,3,0`)
 .then(res => res.json())
 .then(data => {
 
