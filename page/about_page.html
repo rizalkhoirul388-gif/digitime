@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tentang Aplikasi - DigiTime</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body{
+    font-family:'Segoe UI',sans-serif;
+    padding:20px;
+    margin:0;
+    transition:0.5s;
+}
+
+body.dark{
+    background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:white;
+}
+
+body.light{
+    background:linear-gradient(135deg,#f5f7fa,#c3cfe2);
+    color:#222;
+}
+
+.about-box{
+    max-width:800px;
+    margin:30px auto;
+    padding:25px;
+    border-radius:16px;
+    background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(15px);
+}
+
+.about-box h2{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.feature-list li{
+    margin-bottom:10px;
+}
+
+.footer{
+    margin-top:50px;
+    text-align:center;
+    opacity:0.8;
+}
+.version{
+    font-size:14px;
+    opacity:0.7;
+}
+</style>
+</head>
+<body class="dark">
+
+<div class="about-box shadow-lg">
+
+<h2>Tentang Aplikasi</h2>
+
+<p>
+<strong>DigiTime</strong> adalah aplikasi web modern yang membantu umat Muslim mengetahui waktu sholat secara akurat berdasarkan lokasi pengguna secara real-time.
+Aplikasi ini dirancang sederhana, ringan, dan mudah digunakan kapan saja.
+</p>
+
+<hr>
+
+<h5>Fitur Utama</h5>
+<ul class="feature-list">
+<li>Deteksi lokasi otomatis menggunakan GPS</li>
+<li>Countdown menuju waktu sholat berikutnya</li>
+<li>Notifikasi saat waktu sholat tiba</li>
+<li>Adzan otomatis (Jika aktif)</li>
+<li>Mode otomatis siang & malam</li>
+<li>Update jadwal otomatis setiap hari</li>
+<li>Ringan di semua perangkat</li>
+</ul>
+
+<hr>
+
+<h5>Cara Kerja</h5>
+<p>
+Aplikasi mengambil koordinat lokasi pengguna melalui Geolocation API,
+kemudian mengambil data jadwal sholat dari layanan API terpercaya.
+Sistem akan menghitung waktu sholat berikutnya dan menampilkan hitungan mundur secara real-time.
+Saat waktu tiba, notifikasi akan muncul dan adzan akan diputar (jika diaktifkan).
+</p>
+
+<hr>
+
+<h5>Sumber Data</h5>
+<ul>
+<li>API Aladhan (Jadwal Sholat)</li>
+<li>OpenStreetMap (Deteksi Kota)</li>
+</ul>
+
+<hr>
+
+<h5>Privacy</h5>
+<p>
+Aplikasi ini tidak menyimpan data pribadi pengguna.
+Lokasi hanya digunakan untuk mengambil jadwal sholat dan tidak disimpan di server mana pun.
+</p>
+
+<hr>
+
+<h5>Pengembang</h5>
+<p>
+Dikembangkan oleh: <strong>DigiTime</strong><br> Author: <strong>Khoirul Rizal</strong><br><br><hr>
+<span class="version">Versi 1.1.1 • © 2026</span>
+</p>
+
+<div class="text-center mt-4">
+<a href="../index.html" class="btn btn-success">⬅ Kembali ke Beranda</a>
+</div>
+
+</div>
+
+<div class="footer">
+Copyright © <span id="tahun"></span> DigiTime
+</div>
+
+<script>
+// Auto theme berdasarkan jam
+function updateTheme(){
+    const now=new Date();
+    if(now.getHours()>=18 || now.getHours()<5){
+        document.body.className="dark";
+    }else{
+        document.body.className="light";
+    }
+}
+updateTheme();
+
+const tahun = new Date().getFullYear();
+document.getElementById('tahun').innerText = tahun;
+</script>
+
+</body>
+</html>
