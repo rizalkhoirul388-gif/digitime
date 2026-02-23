@@ -4,6 +4,23 @@ let countdownInterval = null;
 let currentDay = new Date().getDate();
 let prayers = {};
 let lastTriggered = "";
+let lastPreNotify = "";
+
+// Minta izin notifikasi saat pertama kali
+if ("Notification" in window) {
+    if (Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+}
+
+function sendNotification(title, body){
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, {
+            body: body,
+            icon: "icon.png" // opsional (kalau ada)
+        });
+    }
+}
 
 function pad(n){ return String(n).padStart(2,'0'); }
 
@@ -59,6 +76,7 @@ function fetchJadwal(){
     jadwal.innerHTML = html;
 
     lastTriggered = "";
+    lastPreNotify = "";
     startCountdown();
 
 })
@@ -115,8 +133,36 @@ function updateCountdown(){
     const active=document.getElementById("prayer-"+nextName);
     if(active) active.classList.add("next");
     
+    // 🔔 NOTIF 10 MENIT SEBELUM
+const tenMinutes = 10 * 60 * 1000;
+
+if(diff <= tenMinutes && diff > tenMinutes - 1000 && lastPreNotify !== nextName){
+  
+  sendNotification(
+    "Pengingat Sholat",
+    "Siap-Siap! 10 menit menuju " + nextName
+);
+
+    lastPreNotify = nextName;
+
+    const alertBox = document.getElementById("notifAlert");
+    alertBox.classList.remove("d-none");
+
+    document.getElementById("cek").innerText =
+        "Siap-Siap yuk.. Waktu kurang 10 menit menuju " + nextName;
+
+    setTimeout(()=>{
+        alertBox.classList.add("d-none");
+    },5000);
+}
+    
 
     if(diff <= 1000 && diff >= 0 && lastTriggered !== nextName){
+      
+      sendNotification(
+    "Waktu Sholat",
+    "🕌 Waktu " + nextName + " telah tiba"
+);
 
     lastTriggered = nextName;
 
