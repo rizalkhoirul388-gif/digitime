@@ -136,12 +136,12 @@ function updateCountdown(){
     // 🔔 NOTIF 10 MENIT SEBELUM
 const tenMinutes = 10 * 60 * 1000;
 
-if(diff <= tenMinutes && diff > tenMinutes - 1000 && lastPreNotify !== nextName){
-  
-  sendNotification(
-    "Pengingat Sholat",
-    "Siap-Siap! 10 menit menuju " + nextName
-);
+if(diff <= tenMinutes && lastPreNotify !== nextName){
+
+    sendNotification(
+        "Pengingat Sholat",
+        "Siap-Siap! 10 menit menuju " + nextName
+    );
 
     lastPreNotify = nextName;
 
@@ -149,7 +149,7 @@ if(diff <= tenMinutes && diff > tenMinutes - 1000 && lastPreNotify !== nextName)
     alertBox.classList.remove("d-none");
 
     document.getElementById("cek").innerText =
-        "Siap-Siap yuk.. Waktu kurang 10 menit menuju " + nextName;
+        "Siap-Siap yuk.. 10 menit menuju " + nextName;
 
     setTimeout(()=>{
         alertBox.classList.add("d-none");
